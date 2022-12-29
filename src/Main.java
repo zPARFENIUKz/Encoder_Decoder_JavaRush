@@ -11,6 +11,6 @@ public class Main {
     public static void main(String[] args) {
         CryptoAnalyzer analyzer = new RussianCryptoAnalyzer();
         // key is 1 -> there must be all letters shifted by 1
-        analyzer.encode(SRC_PATH, DEST_PATH, 1);
+        analyzer.encode(DEST_PATH, SRC_PATH, -1);
     }
 }
