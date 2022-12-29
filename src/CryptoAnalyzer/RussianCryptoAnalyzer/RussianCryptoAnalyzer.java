@@ -62,7 +62,7 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
             if (charIndex == -1) {
                 newCharacter = c;
             } else {
-                newCharacter = ENCODED_CHARACTERS.get((charIndex + key) % ENCODED_CHARACTERS.size());
+                newCharacter = ENCODED_CHARACTERS.get(Math.abs(charIndex + key) % ENCODED_CHARACTERS.size());
             }
             sb.append(newCharacter);
         }
@@ -70,8 +70,8 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
     }
 
     @Override
-    public void decode(Path scr, Path dest, int key) {
-
+    public void decode(Path src, Path dest, int key) {
+        encode(src, dest, -key);
     }
 
     @Override
