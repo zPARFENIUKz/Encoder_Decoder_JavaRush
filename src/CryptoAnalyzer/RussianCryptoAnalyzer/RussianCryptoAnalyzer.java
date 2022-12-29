@@ -6,10 +6,8 @@ import CryptoAnalyzer.CryptoAnalyzerExceptions.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.TreeMap;
+import java.security.KeyStore;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -97,28 +95,31 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
         } catch (IOException e) {
             throw new CryptoAnalyzerIOException(e);
         }
-        TreeMap<Integer, String> variants = new TreeMap<>();
+        TreeMap<Integer, Map.Entry<Integer, String>> variants = new TreeMap<>();
         for (int key = minKey; key <= maxKey; ++key) {
             final String decoded = ceasarChipherEncoder(sourceText, -key);
 
             int textCorrectness = getTextCorrectness(decoded);
             if (textCorrectness == 0) {
                 try {
-                    Files.write(dest, variants.firstEntry().getValue().getBytes());
+                    Files.write(dest, variants.firstEntry().getValue().getValue().getBytes());
                 } catch (IOException e) {
                     throw new CryptoAnalyzerIOException(e);
                 }
                 return key;
             }
-            variants.put(textCorrectness, decoded);
-
+            if (!variants.containsKey(textCorrectness)) {
+                variants.put(textCorrectness, new AbstractMap.SimpleEntry<>(key, decoded));
+            }
         }
+        Map.Entry<Integer, Map.Entry<Integer, String>> entry;
         try {
-            Files.write(dest, variants.firstEntry().getValue().getBytes());
+            entry = variants.firstEntry();
+            Files.write(dest, entry.getValue().getValue().getBytes());
         } catch (IOException e) {
             throw new CryptoAnalyzerIOException(e);
         }
-        return variants.firstKey();
+        return entry.getValue().getKey();
     }
 
     private int getTextCorrectness(String str) {
