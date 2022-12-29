@@ -1,7 +1,5 @@
 package CryptoAnalyzer.CryptoAnalyzerExceptions;
 
-import java.io.IOException;
-
 public class CryptoAnalyzerIOException extends RuntimeException {
     public CryptoAnalyzerIOException() {
     }

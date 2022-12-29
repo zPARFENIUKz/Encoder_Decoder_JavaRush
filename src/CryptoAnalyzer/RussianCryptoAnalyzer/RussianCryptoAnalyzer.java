@@ -2,11 +2,8 @@ package CryptoAnalyzer.RussianCryptoAnalyzer;
 
 import CryptoAnalyzer.CryptoAnalyzer;
 import CryptoAnalyzer.CryptoAnalyzerExceptions.*;
-import CryptoAnalyzer.DecodeType.DecodeType;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -30,12 +27,7 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
 
     @Override
     public void encode(Path src, Path dest, int key) {
-        if (src == null) throw new CryptoAnalyzerNullPointerException("src can't be null");
-        if (dest == null) throw new CryptoAnalyzerNullPointerException("dest can't be null");
-        if (src.toFile().isDirectory()) throw new CryptoAnalyzerPathToDirectory("src is path to directory, it must be a file");
-        if (!src.toFile().exists()) throw new CryptoAnalyzerFileNotFoundException("src file doesn't exists");
-        if (dest.toFile().isDirectory()) throw new CryptoAnalyzerPathToDirectory("dest is path to directory, it must be a file");
-        if (dest.toFile().exists()) throw new CryptoAnalyzerFileAlreadyExistsException("dest file already exists");
+        validateFiles(src, dest);
         //if (key < 0) throw new CryptoAnalyzerInvalidKey("Invalid key was passed, it must be greater tha 0");
         final String sourceText;
         try {
@@ -50,6 +42,15 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
         } catch (IOException e) {
             throw new CryptoAnalyzerIOException(e);
         }
+    }
+
+    private void validateFiles(Path src, Path dest) {
+        if (src == null) throw new CryptoAnalyzerNullPointerException("src can't be null");
+        if (dest == null) throw new CryptoAnalyzerNullPointerException("dest can't be null");
+        if (src.toFile().isDirectory()) throw new CryptoAnalyzerPathToDirectory("src is path to directory, it must be a file");
+        if (!src.toFile().exists()) throw new CryptoAnalyzerFileNotFoundException("src file doesn't exists");
+        if (dest.toFile().isDirectory()) throw new CryptoAnalyzerPathToDirectory("dest is path to directory, it must be a file");
+        if (dest.toFile().exists()) throw new CryptoAnalyzerFileAlreadyExistsException("dest file already exists");
     }
 
     private String ceasarChipherEncoder(String sourceText, int key) {
@@ -80,7 +81,13 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
     }
 
     @Override
-    public void decode(Path src, Path dest, DecodeType type) {
+    public void decodeBrutForce(Path src, Path dest) {
+        validateFiles(src, dest);
+
+    }
+
+    @Override
+    public void decodeStatisticAnalysis(Path src, Path example, Path dest) {
 
     }
 }

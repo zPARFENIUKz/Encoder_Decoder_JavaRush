@@ -2,8 +2,6 @@ import CryptoAnalyzer.CryptoAnalyzer;
 import CryptoAnalyzer.RussianCryptoAnalyzer.RussianCryptoAnalyzer;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Main {
     private static final Path SRC_PATH = Path.of("src\\Files\\src.txt");
