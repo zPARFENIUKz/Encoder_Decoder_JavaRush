@@ -4,6 +4,8 @@ import CryptoAnalyzer.CryptoAnalyzer;
 import CryptoAnalyzer.CryptoAnalyzerExceptions.CryptoAnalyzerNullPointerException;
 import CryptoAnalyzer.DecodeType.DecodeType;
 
+import java.io.FileNotFoundException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +29,13 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
 
     @Override
     public void encode(Path src, Path dest, int key) {
+        if (src == null) throw new CryptoAnalyzerNullPointerException("src can't be null");
+        if (dest == null) throw new CryptoAnalyzerNullPointerException("dest can't be null");
+        if (src.toFile().isDirectory()) throw new CryptoAnalyzerPathToDirectory("src is path to directory, it must be a file");
+        if (!src.toFile().exists()) throw new CryptoAnalyzerFileNotFoundException("src file doesn't exists");
+        if (dest.toFile().isDirectory()) throw new CryptoAnalyzerPathToDirectory("dest is path to directory, it must be a file");
+        if (dest.toFile().exists()) throw new CryptoAnalyzerFileAlreadyExistsException("dest file already exists");
+        if (key < 0) throw new CryptoAnalyzerInvalidKey("Invalid key was passed, it must be greater tha 0");
 
     }
 
