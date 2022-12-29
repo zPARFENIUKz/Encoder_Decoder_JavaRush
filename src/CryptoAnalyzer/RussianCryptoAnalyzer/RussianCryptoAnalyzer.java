@@ -62,7 +62,12 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
             if (charIndex == -1) {
                 newCharacter = c;
             } else {
-                newCharacter = ENCODED_CHARACTERS.get(Math.abs(charIndex + key) % ENCODED_CHARACTERS.size());
+                int pos = charIndex + key;
+                if (pos > 0) {
+                    newCharacter = ENCODED_CHARACTERS.get(pos % ENCODED_CHARACTERS.size());
+                } else {
+                    newCharacter = ENCODED_CHARACTERS.get(ENCODED_CHARACTERS.size() - (Math.abs(pos) % ENCODED_CHARACTERS.size()));
+                }
             }
             sb.append(newCharacter);
         }
