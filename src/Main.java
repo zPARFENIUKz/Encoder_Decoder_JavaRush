@@ -13,5 +13,10 @@ public class Main {
             alphabetRu.add((char) i);
         }
         alphabetRu.forEach(System.out::print);
+        List<Character> allChars = new ArrayList<>(alphabetRu);
+        for (final int c : " ,.?!-:;\"'".toCharArray()) {
+            allChars.add((char) c);
+        }
+        allChars.forEach(System.out::print);
     }
 }
