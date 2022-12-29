@@ -5,7 +5,9 @@ import CryptoAnalyzer.CryptoAnalyzerExceptions.*;
 import CryptoAnalyzer.DecodeType.DecodeType;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,8 +37,20 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
         if (!src.toFile().exists()) throw new CryptoAnalyzerFileNotFoundException("src file doesn't exists");
         if (dest.toFile().isDirectory()) throw new CryptoAnalyzerPathToDirectory("dest is path to directory, it must be a file");
         if (dest.toFile().exists()) throw new CryptoAnalyzerFileAlreadyExistsException("dest file already exists");
-        if (key < 0) throw new CryptoAnalyzerInvalidKey("Invalid key was passed, it must be greater tha 0");
+        //if (key < 0) throw new CryptoAnalyzerInvalidKey("Invalid key was passed, it must be greater tha 0");
+        final String sourceText;
+        try {
+             sourceText = new String(Files.readAllBytes(src));
+        } catch (IOException e) {
+            throw new CryptoAnalyzerIOException(e);
+        }
 
+        final String encodedText = ceasarChipherEncoder(sourceText, key);
+        try {
+            Files.write(dest, encodedText.getBytes());
+        } catch (IOException e) {
+            throw new CryptoAnalyzerIOException(e);
+        }
     }
 
     @Override
