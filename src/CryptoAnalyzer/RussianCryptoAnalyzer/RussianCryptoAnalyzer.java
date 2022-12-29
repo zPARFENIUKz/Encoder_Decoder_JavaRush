@@ -1,7 +1,7 @@
 package CryptoAnalyzer.RussianCryptoAnalyzer;
 
 import CryptoAnalyzer.CryptoAnalyzer;
-import CryptoAnalyzer.CryptoAnalyzerExceptions.CryptoAnalyzerNullPointerException;
+import CryptoAnalyzer.CryptoAnalyzerExceptions.*;
 import CryptoAnalyzer.DecodeType.DecodeType;
 
 import java.io.FileNotFoundException;
