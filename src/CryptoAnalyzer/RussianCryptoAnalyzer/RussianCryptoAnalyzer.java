@@ -26,7 +26,6 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
         for (final int c : PUNCTUATION_CHARACTERS.toCharArray()) {
             ENCODED_CHARACTERS.add((char) c);
         }
-        ENCODED_CHARACTERS.forEach(System.out::print);
     }
 
     @Override
@@ -60,7 +59,7 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
             // -1 if ENCODED_CHARACTERS doesn't contain c
             // therefore we don't need to encode it :)
             Character newCharacter;
-            if (charIndex != -1) {
+            if (charIndex == -1) {
                 newCharacter = c;
             } else {
                 newCharacter = ENCODED_CHARACTERS.get((charIndex + key) % ENCODED_CHARACTERS.size());
