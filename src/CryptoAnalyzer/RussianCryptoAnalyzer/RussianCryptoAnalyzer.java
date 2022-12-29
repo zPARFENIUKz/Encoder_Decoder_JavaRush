@@ -53,6 +53,23 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
         }
     }
 
+    private String ceasarChipherEncoder(String sourceText, int key) {
+        final StringBuilder sb = new StringBuilder(sourceText.length());
+        for (final Character c : sourceText.toCharArray()) {
+            int charIndex = ENCODED_CHARACTERS.indexOf(c);
+            // -1 if ENCODED_CHARACTERS doesn't contain c
+            // therefore we don't need to encode it :)
+            Character newCharacter;
+            if (charIndex != -1) {
+                newCharacter = c;
+            } else {
+                newCharacter = ENCODED_CHARACTERS.get((charIndex + key) % ENCODED_CHARACTERS.size());
+            }
+            sb.append(newCharacter);
+        }
+        return sb.toString();
+    }
+
     @Override
     public void decode(Path scr, Path dest, int key) {
 
