@@ -7,13 +7,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class RussianCryptoAnalyzer implements CryptoAnalyzer {
     private static final String PUNCTUATION_CHARACTERS = " ,.?!-:;\"'";
     private static final List<Character> ENCODED_CHARACTERS;
+
     static {
         final int firstLetterIndex = (int) 'А';
         final int lastLetterIndex = (int) 'Я';
@@ -33,7 +36,7 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
         //if (key < 0) throw new CryptoAnalyzerInvalidKey("Invalid key was passed, it must be greater tha 0");
         final String sourceText;
         try {
-             sourceText = new String(Files.readAllBytes(src));
+            sourceText = new String(Files.readAllBytes(src));
         } catch (IOException e) {
             throw new CryptoAnalyzerIOException(e);
         }
@@ -49,9 +52,11 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
     private void validateFiles(Path src, Path dest) {
         if (src == null) throw new CryptoAnalyzerNullPointerException("src can't be null");
         if (dest == null) throw new CryptoAnalyzerNullPointerException("dest can't be null");
-        if (src.toFile().isDirectory()) throw new CryptoAnalyzerPathToDirectory("src is path to directory, it must be a file");
+        if (src.toFile().isDirectory())
+            throw new CryptoAnalyzerPathToDirectory("src is path to directory, it must be a file");
         if (!src.toFile().exists()) throw new CryptoAnalyzerFileNotFoundException("src file doesn't exists");
-        if (dest.toFile().isDirectory()) throw new CryptoAnalyzerPathToDirectory("dest is path to directory, it must be a file");
+        if (dest.toFile().isDirectory())
+            throw new CryptoAnalyzerPathToDirectory("dest is path to directory, it must be a file");
         if (dest.toFile().exists()) throw new CryptoAnalyzerFileAlreadyExistsException("dest file already exists");
     }
 
@@ -69,7 +74,7 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
                 if (pos > 0) {
                     newCharacter = ENCODED_CHARACTERS.get(pos % ENCODED_CHARACTERS.size());
                 } else {
-                    newCharacter = ENCODED_CHARACTERS.get(ENCODED_CHARACTERS.size() - (Math.abs(pos) % ENCODED_CHARACTERS.size()));
+                    newCharacter = ENCODED_CHARACTERS.get((ENCODED_CHARACTERS.size() - (Math.abs(pos) % ENCODED_CHARACTERS.size())) % ENCODED_CHARACTERS.size());
                 }
             }
             sb.append(newCharacter);
@@ -83,31 +88,40 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
     }
 
     @Override
-    public boolean decodeBrutForce(Path src, Path dest, int minKey, int maxKey) {
+    public int decodeBrutForce(Path src, Path dest, int minKey, int maxKey) {
         validateFiles(src, dest);
         if (minKey >= maxKey) throw new CryptoAnalyzerInvalidKey("minKey must be less than maxKey");
         final String sourceText;
         try {
-             sourceText = new String(Files.readAllBytes(src));
+            sourceText = new String(Files.readAllBytes(src));
         } catch (IOException e) {
             throw new CryptoAnalyzerIOException(e);
         }
-
+        TreeMap<Integer, String> variants = new TreeMap<>();
         for (int key = minKey; key <= maxKey; ++key) {
-            final String decoded = ceasarChipherEncoder(sourceText, key);
-            if (isCorrectText(decoded)) {
+            final String decoded = ceasarChipherEncoder(sourceText, -key);
+
+            int textCorrectness = getTextCorrectness(decoded);
+            if (textCorrectness == 0) {
                 try {
-                    Files.write(dest, decoded.getBytes());
+                    Files.write(dest, variants.firstEntry().getValue().getBytes());
                 } catch (IOException e) {
                     throw new CryptoAnalyzerIOException(e);
                 }
-                return true;
+                return key;
             }
+            variants.put(textCorrectness, decoded);
+
         }
-        return false;
+        try {
+            Files.write(dest, variants.firstEntry().getValue().getBytes());
+        } catch (IOException e) {
+            throw new CryptoAnalyzerIOException(e);
+        }
+        return variants.firstKey();
     }
 
-    private boolean isCorrectText(String str) {
+    private int getTextCorrectness(String str) {
         // In the incorrect text there will be words
         // in which the case of letters changes incomprehensibly, for example: ПбвФВка
         // Or in which there are several punctuation marks in a row,
@@ -116,14 +130,24 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
         str = str.replaceAll("\"\"", "\"");
         str = str.replaceAll("\'\'", "'");
         Pattern p1 = Pattern.compile("[А-Я]+[а-я]+[А-Я]+");
-        Pattern p2 = Pattern.compile(String.format("[%s]+", PUNCTUATION_CHARACTERS));
-        if (p1.matcher(str).find()) return false;
-        if (p2.matcher(str).find()) return false;
-        return true;
+        Pattern p2 = Pattern.compile("[а-я]+[А-Я]");
+        Pattern p3 = Pattern.compile(String.format("[%s]{2,}+", PUNCTUATION_CHARACTERS.replaceAll(" ", "")));
+        Pattern p4 = Pattern.compile(String.format("[%s][А-Я|а-я]+", PUNCTUATION_CHARACTERS.replaceAll(" ", "")));
+
+        List<Pattern> patterns = List.of(p1, p2, p3, p4);
+
+        int countOfMistakes = 0;
+        for (final Pattern pattern : patterns) {
+            Matcher matcher = pattern.matcher(str);
+            while (matcher.find()) {
+                ++countOfMistakes;
+            }
+        }
+        return countOfMistakes;
     }
 
     @Override
-    public boolean decodeStatisticAnalysis(Path src, Path example, Path dest) {
-        return false;
+    public void decodeStatisticAnalysis(Path src, Path example, Path dest) {
+
     }
 }
