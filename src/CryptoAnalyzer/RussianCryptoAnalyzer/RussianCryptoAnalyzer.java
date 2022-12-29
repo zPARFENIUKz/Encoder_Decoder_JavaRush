@@ -81,9 +81,28 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
     }
 
     @Override
-    public void decodeBrutForce(Path src, Path dest) {
+    public boolean decodeBrutForce(Path src, Path dest, int minKey, int maxKey) {
         validateFiles(src, dest);
+        if (minKey >= maxKey) throw new CryptoAnalyzerInvalidKey("minKey must be less than maxKey");
+        final String sourceText;
+        try {
+             sourceText = new String(Files.readAllBytes(src));
+        } catch (IOException e) {
+            throw new CryptoAnalyzerIOException(e);
+        }
 
+        for (int key = minKey; key <= maxKey; ++key) {
+            final String decoded = ceasarChipherEncoder(sourceText, key);
+            if (isCorrectText(decoded)) {
+                try {
+                    Files.write(dest, decoded.getBytes());
+                } catch (IOException e) {
+                    throw new CryptoAnalyzerIOException(e);
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
