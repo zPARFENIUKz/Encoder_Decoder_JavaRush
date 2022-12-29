@@ -16,6 +16,7 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
         ENCODED_CHARACTERS = new ArrayList<>(lastLetterIndex - firstLetterIndex);
         for (int i = firstLetterIndex; i <= lastLetterIndex; ++i) {
             ENCODED_CHARACTERS.add((char) i);
+            ENCODED_CHARACTERS.add((char) (i + 32));
         }
         for (final int c : PUNCTUATION_CHARACTERS.toCharArray()) {
             ENCODED_CHARACTERS.add((char) c);
