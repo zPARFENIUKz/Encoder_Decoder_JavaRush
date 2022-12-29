@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RussianCryptoAnalyzer implements CryptoAnalyzer {
     private static final String PUNCTUATION_CHARACTERS = " ,.?!-:;\"'";
@@ -105,8 +107,23 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
         return false;
     }
 
-    @Override
-    public void decodeStatisticAnalysis(Path src, Path example, Path dest) {
+    private boolean isCorrectText(String str) {
+        // In the incorrect text there will be words
+        // in which the case of letters changes incomprehensibly, for example: ПбвФВка
+        // Or in which there are several punctuation marks in a row,
+        // with the exception "?!"
+        str = str.replaceAll("\\?!", "?");
+        str = str.replaceAll("\"\"", "\"");
+        str = str.replaceAll("\'\'", "'");
+        Pattern p1 = Pattern.compile("[А-Я]+[а-я]+[А-Я]+");
+        Pattern p2 = Pattern.compile(String.format("[%s]+", PUNCTUATION_CHARACTERS));
+        if (p1.matcher(str).find()) return false;
+        if (p2.matcher(str).find()) return false;
+        return true;
+    }
 
+    @Override
+    public boolean decodeStatisticAnalysis(Path src, Path example, Path dest) {
+        return false;
     }
 }
