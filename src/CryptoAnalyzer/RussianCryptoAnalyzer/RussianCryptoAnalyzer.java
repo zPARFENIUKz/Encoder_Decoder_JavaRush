@@ -6,19 +6,17 @@ import CryptoAnalyzer.CryptoAnalyzerExceptions.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.KeyStore;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class RussianCryptoAnalyzer implements CryptoAnalyzer {
     private static final String PUNCTUATION_CHARACTERS = " ,.?!-:;\"'";
     private static final List<Character> ENCODED_CHARACTERS;
 
     static {
-        final int firstLetterIndex = (int) 'А';
-        final int lastLetterIndex = (int) 'Я';
+        final int firstLetterIndex = 'А';
+        final int lastLetterIndex = 'Я';
         ENCODED_CHARACTERS = new ArrayList<>(lastLetterIndex - firstLetterIndex);
         for (int i = firstLetterIndex; i <= lastLetterIndex; ++i) {
             ENCODED_CHARACTERS.add((char) i);
@@ -130,7 +128,7 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
         // with the exception "?!"
         str = str.replaceAll("\\?!", "?");
         str = str.replaceAll("\"\"", "\"");
-        str = str.replaceAll("\'\'", "'");
+        str = str.replaceAll("''", "'");
         Pattern p1 = Pattern.compile("[А-Я]+[а-я]+[А-Я]+");
         Pattern p2 = Pattern.compile("[а-я]+[А-Я]");
         Pattern p3 = Pattern.compile(String.format("[%s]{2,}+", PUNCTUATION_CHARACTERS.replaceAll(" ", "")));
@@ -149,7 +147,7 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
     }
 
     @Override
-    public void decodeStatisticAnalysis(Path src, Path example, Path dest) {
+    public int decodeStatisticAnalysis(Path src, Path example, Path dest) {
         validateFiles(src, dest);
         validateFiles(example, dest);
         final String exampleText;
@@ -164,6 +162,7 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
         Map<Character, Double> encodedCharsFrequency = getCharsFrequency(sourceText);
         int key = calculateKey(charsFrequency, encodedCharsFrequency);
         decode(src, dest, key);
+        return key % ENCODED_CHARACTERS.size();
     }
 
 
