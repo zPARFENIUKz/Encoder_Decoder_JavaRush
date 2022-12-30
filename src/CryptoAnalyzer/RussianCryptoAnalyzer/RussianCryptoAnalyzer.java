@@ -149,6 +149,23 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
 
     @Override
     public void decodeStatisticAnalysis(Path src, Path example, Path dest) {
-
+        validateFiles(src, dest);
+        validateFiles(example, dest);
+        final String exampleText;
+        try {
+            exampleText = new String(Files.readAllBytes(example));
+        } catch (IOException e) {
+            throw new CryptoAnalyzerIOException(e);
+        }
+        Map<Character, Integer> charsFrequency = getCharsFrequency(exampleText);
+        final String encodedText;
+        try {
+            encodedText = new String(Files.readAllBytes(src));
+        } catch (IOException e) {
+            throw new CryptoAnalyzerIOException(e);
+        }
+        Map<Character, Integer> encodedCharsFrequency = getCharsFrequency(encodedText);
+        int bestKey = getBestKey(charsFrequency, encodedCharsFrequency);
+        decode(src, dest, bestKey);
     }
 }
