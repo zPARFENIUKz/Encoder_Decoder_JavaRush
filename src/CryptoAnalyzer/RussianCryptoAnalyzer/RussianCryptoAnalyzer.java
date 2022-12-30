@@ -10,6 +10,7 @@ import java.security.KeyStore;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class RussianCryptoAnalyzer implements CryptoAnalyzer {
     private static final String PUNCTUATION_CHARACTERS = " ,.?!-:;\"'";
@@ -152,20 +153,74 @@ public class RussianCryptoAnalyzer implements CryptoAnalyzer {
         validateFiles(src, dest);
         validateFiles(example, dest);
         final String exampleText;
+        final String sourceText;
         try {
             exampleText = new String(Files.readAllBytes(example));
+            sourceText = new String(Files.readAllBytes(src));
         } catch (IOException e) {
             throw new CryptoAnalyzerIOException(e);
         }
-        Map<Character, Integer> charsFrequency = getCharsFrequency(exampleText);
-        final String encodedText;
-        try {
-            encodedText = new String(Files.readAllBytes(src));
-        } catch (IOException e) {
-            throw new CryptoAnalyzerIOException(e);
-        }
-        Map<Character, Integer> encodedCharsFrequency = getCharsFrequency(encodedText);
-        int bestKey = getBestKey(charsFrequency, encodedCharsFrequency);
-        decode(src, dest, bestKey);
+        Map<Character, Double> charsFrequency = getCharsFrequency(exampleText);
+        Map<Character, Double> encodedCharsFrequency = getCharsFrequency(sourceText);
+        int key = calculateKey(charsFrequency, encodedCharsFrequency);
+        decode(src, dest, key);
     }
+
+
+    private Map<Character, Double> getCharsFrequency(String str) {
+        final Map<Character, Double> charsFrequency = new HashMap<>();
+        List<Character> suitableChars = str.chars().mapToObj(c -> (char) c)
+                .filter(ENCODED_CHARACTERS::contains)
+                .toList();
+        Set<Character> uniqueChars = new HashSet<>(suitableChars);
+        for (final Character c : uniqueChars) {
+            charsFrequency.put(c, Collections.frequency(suitableChars, c) * 1.0 / suitableChars.size());
+        }
+        return charsFrequency;
+    }
+
+    private int calculateKey(Map<Character, Double> charsFrequency, Map<Character, Double> encodedCharsFrequency) {
+        Map<Integer, Integer> keysRating = new HashMap<>();
+        for (final var entryEncoded : encodedCharsFrequency.entrySet()) {
+            // minimalDifference - отображает 2 символа между которыми по частоте употребления минимальная разница
+            // в тексте экземпляра и в закодированном тексте
+            Map.Entry<Character, Character> minimalDifference = null;
+            for (final var entry : charsFrequency.entrySet()) {
+                if (minimalDifference == null) {
+                    minimalDifference = new AbstractMap.SimpleEntry<>(entry.getKey(), entryEncoded.getKey());
+                } else {
+                    //final int encodedCharacterIndex =
+                    // если разница между частотами меньше чем у минимальной пары
+                    final double freqDiff = Math.abs(entry.getValue() - entryEncoded.getValue());
+                    final double minFreqDiff = Math.abs(charsFrequency.get(minimalDifference.getKey()) - encodedCharsFrequency.get(minimalDifference.getValue()));
+
+                    if (freqDiff < minFreqDiff) {
+                        // обновляем пару у которой минимальное расхождение в частотах
+                        minimalDifference = new AbstractMap.SimpleEntry<>(entry.getKey(), entryEncoded.getKey());
+                    }
+                }
+            }
+            //int localKey = (int) minimalDifference.getValue() - (int) minimalDifference.getKey();
+            final int encodedCharacterIndex = ENCODED_CHARACTERS.indexOf(minimalDifference.getValue());
+            final int characterIndex = ENCODED_CHARACTERS.indexOf(minimalDifference.getKey());
+            final int localKey = (ENCODED_CHARACTERS.size() + encodedCharacterIndex) - characterIndex;
+            if (!keysRating.containsKey(localKey)) {
+                keysRating.put(localKey, 1);
+            } else {
+                keysRating.put(localKey, keysRating.get(localKey) + 1);
+            }
+        }
+        Integer bestKey = null;
+        for (final var entry : keysRating.entrySet()) {
+            if (bestKey == null) {
+                bestKey = entry.getKey();
+            } else {
+                if (entry.getValue() > keysRating.get(bestKey)) {
+                    bestKey = entry.getKey();
+                }
+            }
+        }
+        return bestKey;
+    }
+
 }
